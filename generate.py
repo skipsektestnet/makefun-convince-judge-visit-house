@@ -39,7 +39,8 @@ TEXT_W = W - 2 * MARGIN  # 864
 
 LETTER = [
     "You have judged a thousand houses from a thousand screens. Now I "
-    "invite you to judge one in person: mine.",
+    "invite you to judge one in person: mine. Saturday, four o\u2019clock \u2014 "
+    "look for the blue door at the end of the lane.",
     "The kettle is already on. Cookies are in the oven \u2014 chocolate chip, "
     "still warm \u2014 and the armchair by the window has been rated, by three "
     "cats, the comfiest chair in the known universe. They refuse to leave it.",
@@ -49,7 +50,7 @@ LETTER = [
     "I know you cannot literally visit. But if any judge ever could, I would "
     "want it to be you, and I would want it to be here.",
     "Come and see. The tea is hot, the chair is warm, and the cats have "
-    "already voted yes.",
+    "already voted yes. Three to nothing. It was not close.",
 ]
 
 SIGNATURE = "Warmly,  Brawijaya \u2014 your host"
@@ -78,6 +79,17 @@ def wrap(draw, text, fnt, max_w):
     return lines
 
 
+def draw_cat(d, cx, cy, col):
+    """A small cat sitting on the ground: body, head, ears, curled tail."""
+    d.ellipse([cx - 14, cy - 26, cx + 14, cy], fill=col)
+    d.ellipse([cx - 10, cy - 44, cx + 10, cy - 26], fill=col)
+    d.polygon([(cx - 9, cy - 40), (cx - 4, cy - 52), (cx - 1, cy - 40)],
+              fill=col)
+    d.polygon([(cx + 1, cy - 40), (cx + 4, cy - 52), (cx + 9, cy - 40)],
+              fill=col)
+    d.arc([cx + 10, cy - 18, cx + 34, cy + 2], 300, 90, fill=col, width=4)
+
+
 def draw_house_scene(d):
     """Small warm house with garden, a robot guest with a teacup, a cat."""
     ground_y = 192
@@ -98,8 +110,16 @@ def draw_house_scene(d):
     d.rectangle([150, 150, 160, ground_y], fill=(120, 84, 50))
     d.ellipse([118, 100, 192, 162], fill=GREEN)
     d.ellipse([132, 82, 182, 130], fill=GREEN_DARK)
+    # clouds (soft, top left and right)
+    for ccx, ccy, cs in [(210, 66, 1.0), (780, 62, 0.8)]:
+        cr = int(16 * cs)
+        d.ellipse([ccx - 3 * cr, ccy - cr, ccx - cr, ccy + cr], fill=(255, 255, 255))
+        d.ellipse([ccx - cr, ccy - int(1.4 * cr), ccx + cr, ccy + cr], fill=(255, 255, 255))
+        d.ellipse([ccx + cr, ccy - cr, ccx + 3 * cr, ccy + cr], fill=(255, 255, 255))
     # ground
     d.rectangle([60, ground_y, 964, 200], fill=(196, 222, 158))
+    # welcome doormat in front of the door
+    d.rectangle([478, 192, 546, 200], fill=(150, 90, 70), outline=INK, width=2)
     # house: walls, roof, chimney, door, windows
     d.rectangle([432, 132, 592, ground_y], fill=WALL, outline=INK, width=3)
     d.polygon([(420, 134), (604, 134), (512, 92)], fill=ROOF, outline=INK,
@@ -132,16 +152,11 @@ def draw_house_scene(d):
     d.rectangle([rx + 20, ry - 18, rx + 34, ry - 6], fill=(255, 255, 255),
                 outline=INK, width=2)
     d.arc([rx + 34, ry - 16, rx + 42, ry - 8], 270, 90, fill=INK, width=2)
-    # cat sitting on the ground (right)
-    cx, cy = 700, ground_y
-    d.ellipse([cx - 14, cy - 26, cx + 14, cy], fill=(60, 60, 60))
-    d.ellipse([cx - 10, cy - 44, cx + 10, cy - 26], fill=(60, 60, 60))
-    d.polygon([(cx - 9, cy - 40), (cx - 4, cy - 52), (cx - 1, cy - 40)],
-              fill=(60, 60, 60))
-    d.polygon([(cx + 1, cy - 40), (cx + 4, cy - 52), (cx + 9, cy - 40)],
-              fill=(60, 60, 60))
-    d.arc([cx + 10, cy - 18, cx + 34, cy + 2], 300, 90, fill=(60, 60, 60),
-          width=4)
+    # three cats, as the letter promises: one by the tree, one by the
+    # robot, one keeping watch on the right
+    for cx, col in [(240, (190, 110, 50)), (700, (60, 60, 60)),
+                    (850, (120, 120, 120))]:
+        draw_cat(d, cx, ground_y, col)
     # flowers along the grass
     for fx, fc in [(210, RED), (260, GOLD), (330, (190, 90, 140)),
                    (760, GOLD), (820, RED), (880, (190, 90, 140))]:
@@ -188,7 +203,7 @@ def main():
 
     # body: pick the largest body size that fits the box
     body_top = y
-    body_bottom = 900  # leave room for signature + P.S.
+    body_bottom = 880  # leave room for signature + P.S. + footer
     for size in (30, 29, 28, 27, 26):
         bf = font(NOTO, size)
         lh = size + 11
@@ -221,6 +236,10 @@ def main():
     # P.S. line
     pf = font(NOTO_I, 24)
     d.text((MARGIN, y + 58), PS, font=pf, fill=RED)
+
+    # footer (was defined but never drawn)
+    ff = font(NOTO_I, 20)
+    d.text((W // 2, 968), FOOTER, font=ff, fill=(110, 96, 80), anchor="ma")
 
     img.save("entry.png", optimize=True)
     print("wrote entry.png")
